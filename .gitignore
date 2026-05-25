@@ -32,3 +32,7 @@ data/sample_output/*.xlsx
 # OS
 .DS_Store
 Thumbs.db
+
+skills-lock.json
+.claude/
+.pytest_cache/

@@ -27,9 +27,10 @@ page = st.sidebar.radio(
         "1. 需求输入",
         "2. 风险分析",
         "3. 黑盒测试设计",
-        "4. 白盒测试设计 (路径覆盖)",
-        "5. 套件优化",
-        "6. 导出"
+        "4. 白盒测试设计",
+        "5. 预言生成",
+        "6. 套件优化",
+        "7. 导出"
     ],
     index=0
 )
@@ -52,19 +53,23 @@ if "code_folder" not in st.session_state:
     st.session_state.code_folder = "flask_app"
 if "req_text" not in st.session_state:
     st.session_state.req_text = ""
+if "custom_test_suites" not in st.session_state:
+    st.session_state.custom_test_suites = {}
 
 from src.ui.views import (
     input_page, risk_analysis_page, blackbox_design_page,
-    whitebox_design_page, optimization_page, export_page
+    whitebox_design_page, oracle_page,
+    optimization_page, export_page
 )
 
 page_map = {
     "1. 需求输入": input_page.render,
     "2. 风险分析": risk_analysis_page.render,
     "3. 黑盒测试设计": blackbox_design_page.render,
-    "4. 白盒测试设计 (路径覆盖)": whitebox_design_page.render,
-    "5. 套件优化": optimization_page.render,
-    "6. 导出": export_page.render,
+    "4. 白盒测试设计": whitebox_design_page.render,
+    "5. 预言生成": oracle_page.render,
+    "6. 套件优化": optimization_page.render,
+    "7. 导出": export_page.render,
 }
 
 page_map[page]()

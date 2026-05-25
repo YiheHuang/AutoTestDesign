@@ -37,9 +37,6 @@ class JSONExporter:
                 "test_cases": [tc.model_dump() for tc in suite.test_cases],
                 "summary": {
                     "total_cases": suite.total_cases,
-                    "high_priority": suite.high_priority_count,
-                    "medium_priority": suite.medium_priority_count,
-                    "low_priority": suite.low_priority_count,
                     "techniques": self._summarize_techniques(suite),
                 }
             }
@@ -50,7 +47,7 @@ class JSONExporter:
 
         if include_metadata:
             output["metadata"] = {
-                "generated_by": "AutoTestDesign v1.0",
+                "generated_by": "AutoTestDesign v2.2",
                 "generated_at": datetime.datetime.now().isoformat(),
                 "standard": "ISO/IEC 29119-4",
                 "techniques_used": list(
@@ -81,7 +78,7 @@ class JSONExporter:
             output["test_suites"].append(suite_data["test_suite"])
 
         output["metadata"] = {
-            "generated_by": "AutoTestDesign v1.0",
+            "generated_by": "AutoTestDesign v2.2",
             "generated_at": datetime.datetime.now().isoformat(),
             "total_suites": len(suites),
             "total_cases": sum(s.total_cases for s in suites)

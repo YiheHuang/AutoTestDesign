@@ -20,9 +20,16 @@ class DTGenerator:
             temperature=0.1
         )
 
-        dt_data = result if result else {"conditions": [], "actions": [], "simplified_rules": []}
+        dt_data = result.get("simplified_rules", result.get("decision_table", [])) if result else []
+        # 同时保留 conditions/actions 用于UI展示
+        dt_context = {
+            "conditions": result.get("conditions", []) if result else [],
+            "actions": result.get("actions", []) if result else [],
+            "decision_table": result.get("decision_table", []) if result else [],
+            "simplified_rules": dt_data
+        } if result else {"conditions": [], "actions": [], "decision_table": [], "simplified_rules": []}
         test_cases = self._build_cases(result, req.id)
-        return dt_data, test_cases
+        return dt_context, test_cases
 
     @staticmethod
     def _build_cases(result: dict | None, req_id: str) -> list[TestCase]:

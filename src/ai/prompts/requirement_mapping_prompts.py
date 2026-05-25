@@ -73,3 +73,44 @@ REQ_MAPPING_USER_TEMPLATE = """## 需求文档
 {source_code}
 
 请分析以上需求文档和代码仓库，输出标准化的需求列表和需求-代码映射。"""
+
+
+# ── v2.2: 仅生成映射的提示词 (需求已由CSV提供) ──
+
+MAPPING_ONLY_SYSTEM_PROMPT = """你是一名资深软件需求分析师，负责为已有的标准需求条目匹配对应的代码片段。
+
+## 你的任务
+给定一组已经标准化的需求条目和一份代码仓库，为每条需求找到对应的代码片段。
+
+## 输出JSON格式
+{
+  "mappings": [
+    {
+      "requirement_id": "REQ-001",
+      "requirement_title": "...",
+      "code_segments": [
+        {
+          "file_path": "app.py",
+          "start_line": 83,
+          "end_line": 93,
+          "function_name": "validate_username",
+          "description": "验证用户名格式的核心逻辑"
+        }
+      ]
+    }
+  ]
+}
+
+## 约束
+- 只输出mappings，不需要输出requirements
+- 行号必须与提供的源码中的行号一致
+- 只映射真正实现业务逻辑的代码，跳过import/数据库初始化等基础设施代码
+"""
+
+MAPPING_ONLY_USER_TEMPLATE = """## 标准需求列表
+{requirements_json}
+
+## 代码仓库
+{source_code}
+
+请为以上每条需求匹配对应的代码片段，只输出mappings。"""

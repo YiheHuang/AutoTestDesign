@@ -36,7 +36,9 @@ class RiskAnalyzer:
                 assessments.append(RiskAssessment(
                     requirement_id=a.get("requirement_id", ""),
                     risk_level=a.get("risk_level", "Medium"),
-                    risk_factors=a.get("risk_factors", [])
+                    risk_factors=a.get("risk_factors", []),
+                    test_priority=a.get("test_priority", "Medium"),
+                    priority_reason=a.get("priority_reason", "")
                 ))
 
             # 补充LLM未返回的需求(默认Medium)
@@ -46,7 +48,9 @@ class RiskAnalyzer:
                     assessments.append(RiskAssessment(
                         requirement_id=r.id,
                         risk_level="Medium",
-                        risk_factors=["LLM未返回，默认中风险"]
+                        risk_factors=["LLM未返回，默认中风险"],
+                        test_priority="Medium",
+                        priority_reason="LLM未返回评估结果，默认中优先级"
                     ))
 
             logger.info(f"风险分析完成: {len(assessments)} 项")
@@ -55,6 +59,7 @@ class RiskAnalyzer:
         except Exception as e:
             logger.error(f"风险分析失败: {e}")
             return [
-                RiskAssessment(requirement_id=r.id, risk_level="Medium", risk_factors=["分析失败(默认)"])
+                RiskAssessment(requirement_id=r.id, risk_level="Medium", risk_factors=["分析失败(默认)"],
+                               test_priority="Medium", priority_reason="LLM调用失败，默认中优先级")
                 for r in reqs
             ]

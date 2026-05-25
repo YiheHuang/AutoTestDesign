@@ -1,4 +1,4 @@
-"""测试套件优化 (v2.2)"""
+"""测试套件优化 (v2.2: 风险优先级 + 合并 + 覆盖最小化)"""
 
 import json
 from src.models.requirement import TestCaseCodeMapping
@@ -30,6 +30,67 @@ MERGE_USER_TEMPLATE = """## 测试套件 (共{total}个用例)
 
 
 class CoverageOptimizer:
+    def optimize_risk_priority(
+        self,
+        suite: TestSuite,
+        risk_assessments: list,
+        budget: float = 1.0,
+        min_risk: str = ""
+    ) -> TestSuite:
+        """基于风险的优先级排序与筛选
+
+        Args:
+            suite: 待优化套件
+            risk_assessments: 风险评估列表 (RiskAssessment对象)
+            budget: 保留比例 (1.0=全部, 0.5=前50%)
+            min_risk: 最低风险等级 ('High'=仅保留High, 'Medium'=High+Medium, ''=全部)
+        """
+        logger.info(f"风险优化: {suite.id}, budget={budget}, min_risk={min_risk}")
+
+        risk_map = {}
+        for ra in risk_assessments:
+            score = {"High": 3, "Medium": 2, "Low": 1}.get(ra.risk_level, 2)
+            risk_map[ra.requirement_id] = (ra.risk_level, score)
+
+        for tc in suite.test_cases:
+            level, score = risk_map.get(tc.requirement_id, ("Medium", 2))
+            tc.tags = [t for t in tc.tags if not t.startswith("risk:")]
+            tc.tags.append(f"risk:{level}")
+            tc.tags.append(f"risk_score:{score}")
+
+        # 按风险分数降序排列
+        sorted_cases = sorted(
+            suite.test_cases,
+            key=lambda tc: risk_map.get(tc.requirement_id, ("Medium", 2))[1],
+            reverse=True
+        )
+
+        # 筛选最低风险等级
+        if min_risk == "High":
+            sorted_cases = [tc for tc in sorted_cases if risk_map.get(tc.requirement_id, ("Medium",))[0] == "High"]
+        elif min_risk == "Medium":
+            sorted_cases = [tc for tc in sorted_cases if risk_map.get(tc.requirement_id, ("Medium",))[0] in ("High", "Medium")]
+
+        # 预算裁剪
+        if budget < 1.0:
+            cutoff = max(1, int(len(sorted_cases) * budget))
+            sorted_cases = sorted_cases[:cutoff]
+
+        return TestSuite(
+            id=suite.id, name=f"{suite.name} (Risk-Prioritized)",
+            requirement_id=suite.requirement_id,
+            test_cases=sorted_cases,
+            coverage_summary={
+                **suite.coverage_summary,
+                "original_cases": suite.total_cases,
+                "optimized_cases": len(sorted_cases),
+                "deleted_cases": suite.total_cases - len(sorted_cases),
+                "opt_mode": "risk_priority",
+                "budget": budget,
+                "min_risk": min_risk or "All"
+            }
+        )
+
     def optimize_blackbox(self, suite: TestSuite, requirements_json: str = "{}") -> TestSuite:
         """黑盒优化: LLM合并逻辑相同的用例"""
         logger.info(f"黑盒优化: {suite.id}, {suite.total_cases} 用例")

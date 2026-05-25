@@ -9,21 +9,42 @@ def render():
     st.title("导出")
     st.markdown("LLM 纠正字段错误 -> 生成可运行测试脚本或JSON文档")
 
-    all_suites = list(st.session_state.test_suites.values())
-    if not all_suites:
+    all_suites_dict = {**st.session_state.test_suites, **st.session_state.get("custom_test_suites", {})}
+    if not all_suites_dict:
         st.warning("请先生成测试用例")
         return
 
-    total_cases = sum(s.total_cases for s in all_suites)
-    col1, col2 = st.columns(2)
+    # 仅导出有效用例 (优化后失效的不导出)
+    export_suites = []
+    for key, s in all_suites_dict.items():
+        active_ids = st.session_state.get(f"active_{key}")
+        if active_ids is not None:
+            active_cases = [tc for tc in s.test_cases if tc.id in active_ids]
+            if active_cases:
+                import copy
+                es = copy.deepcopy(s)
+                es.test_cases = active_cases
+                export_suites.append(es)
+        else:
+            export_suites.append(s)
+
+    if not export_suites:
+        st.warning("没有可导出的有效用例")
+        return
+
+    active_total = sum(s.total_cases for s in export_suites)
+    all_total = sum(s.total_cases for s in all_suites_dict.values())
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("套件数", len(all_suites))
+        st.metric("套件数", len(export_suites))
     with col2:
-        st.metric("总用例数", total_cases)
+        st.metric("有效用例", active_total)
+    with col3:
+        st.metric("全部用例", all_total)
 
     st.divider()
 
-    suite_options = {s.name: s for s in all_suites}
+    suite_options = {s.name: s for s in export_suites}
     selected = st.multiselect("选择套件", list(suite_options.keys()), default=list(suite_options.keys()))
     if not selected:
         st.info("请选择套件")
