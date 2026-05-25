@@ -22,6 +22,8 @@ class BVAGenerator:
 
         ba_data = result.get("boundary_analysis", []) if result else []
         test_cases = self._build_cases(result, req.id)
+        if not test_cases:
+            logger.warning("BVA: LLM返回了空的test_cases，请重试")
         return ba_data, test_cases
 
     @staticmethod

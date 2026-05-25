@@ -1,0 +1,31 @@
+2026-05-25 18:27:56 | INFO     | src.parser.ai_extractor:extract_mapping_from_csv:136 - LLM映射生成: 3 条已有需求 -> flask_app
+2026-05-25 18:27:57 | INFO     | src.ai.client:__init__:33 - AI客户端初始化完成: base_url=https://yunwu.ai/v1, model=gpt-4o
+2026-05-25 18:28:08 | INFO     | src.parser.ai_extractor:extract_mapping_from_csv:163 - 映射完成: 3 个
+2026-05-25 18:28:17 | INFO     | src.test_design.white_box.path_coverage:generate:30 - LLM路径覆盖: REQ-001
+2026-05-25 18:28:35 | INFO     | src.test_design.white_box.path_coverage:generate:97 - 路径覆盖完成: 7 用例, 覆盖率 100.0%
+2026-05-25 18:28:35 | INFO     | src.test_design.white_box.whitebox_orchestrator:generate_all:41 -   路径覆盖: 7 用例, 覆盖率 100.0%
+2026-05-25 18:28:35 | INFO     | src.test_design.white_box.state_transition:generate:26 - LLM状态转换: REQ-001
+2026-05-25 18:28:51 | INFO     | src.test_design.white_box.state_transition:generate:55 - 状态转换完成: 0 用例
+2026-05-25 18:28:51 | INFO     | src.test_design.white_box.whitebox_orchestrator:generate_all:50 -   状态转换: 0 用例
+2026-05-25 18:35:42 | INFO     | src.optimization.coverage_optimizer:optimize_coverage:150 - 覆盖优化: TS-WB-REQ-001, 目标=60%
+2026-05-25 18:37:19 | INFO     | src.parser.ai_extractor:extract_mapping_from_csv:136 - LLM映射生成: 3 条已有需求 -> flask_app
+2026-05-25 18:37:20 | INFO     | src.ai.client:__init__:33 - AI客户端初始化完成: base_url=https://yunwu.ai/v1, model=gpt-4o
+2026-05-25 18:37:26 | INFO     | src.parser.ai_extractor:extract_mapping_from_csv:163 - 映射完成: 3 个
+2026-05-25 18:37:42 | INFO     | src.test_design.white_box.path_coverage:generate:30 - LLM路径覆盖: REQ-001
+2026-05-25 18:37:56 | INFO     | src.test_design.white_box.path_coverage:generate:97 - 路径覆盖完成: 7 用例, 覆盖率 100.0%
+2026-05-25 18:37:56 | INFO     | src.test_design.white_box.whitebox_orchestrator:generate_all:41 -   路径覆盖: 7 用例, 覆盖率 100.0%
+2026-05-25 18:37:56 | INFO     | src.test_design.white_box.state_transition:generate:25 - LLM状态转换: REQ-001
+2026-05-25 18:38:03 | INFO     | src.test_design.white_box.state_transition:generate:57 - 状态转换完成: 5 用例
+2026-05-25 18:38:03 | INFO     | src.test_design.white_box.whitebox_orchestrator:generate_all:50 -   状态转换: 5 用例
+2026-05-25 18:53:03 | INFO     | src.parser.ai_extractor:extract_mapping_from_csv:136 - LLM映射生成: 3 条已有需求 -> flask_app
+2026-05-25 18:53:04 | INFO     | src.ai.client:__init__:33 - AI客户端初始化完成: base_url=https://yunwu.ai/v1, model=gpt-4o
+2026-05-25 18:53:10 | INFO     | src.parser.ai_extractor:extract_mapping_from_csv:163 - 映射完成: 3 个
+2026-05-25 18:53:20 | INFO     | src.test_design.white_box.path_coverage:generate:30 - LLM路径覆盖: REQ-001
+2026-05-25 18:53:28 | INFO     | src.test_design.white_box.path_coverage:generate:100 - 路径覆盖完成: 7 用例, 覆盖率 100.0%
+2026-05-25 18:53:28 | INFO     | src.test_design.white_box.whitebox_orchestrator:generate_all:41 -   路径覆盖: 7 用例, 覆盖率 100.0%
+2026-05-25 18:53:28 | INFO     | src.test_design.white_box.state_transition:generate:25 - LLM状态转换: REQ-001
+2026-05-25 18:53:43 | INFO     | src.test_design.white_box.state_transition:generate:57 - 状态转换完成: 5 用例
+2026-05-25 18:53:43 | INFO     | src.test_design.white_box.whitebox_orchestrator:generate_all:50 -   状态转换: 5 用例
+2026-05-25 19:00:51 | INFO     | src.parser.ai_extractor:extract_mapping_from_csv:136 - LLM映射生成: 3 条已有需求 -> flask_app
+2026-05-25 19:00:52 | INFO     | src.ai.client:__init__:33 - AI客户端初始化完成: base_url=https://yunwu.ai/v1, model=gpt-4o
+2026-05-25 19:01:03 | INFO     | src.parser.ai_extractor:extract_mapping_from_csv:163 - 映射完成: 3 个

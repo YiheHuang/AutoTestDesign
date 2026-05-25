@@ -29,6 +29,8 @@ class DTGenerator:
             "simplified_rules": dt_data
         } if result else {"conditions": [], "actions": [], "decision_table": [], "simplified_rules": []}
         test_cases = self._build_cases(result, req.id)
+        if not test_cases:
+            logger.warning("DT: LLM返回了空的test_cases，请重试")
         return dt_context, test_cases
 
     @staticmethod

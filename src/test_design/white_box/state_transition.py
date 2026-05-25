@@ -1,6 +1,5 @@
 """状态转换 (v2.2: LLM生成状态机+测试序列)"""
 
-from collections import deque
 from src.models.requirement import StructuredRequirement, RequirementCodeMapping
 from src.models.state_machine import StateMachine, State, Transition
 from src.models.testcase import TestCase, TestStep
@@ -46,6 +45,9 @@ class StateTransitionGenerator:
 
         # 解析测试用例
         test_cases = _build_test_cases(result, req.id)
+
+        if not test_cases:
+            raise RuntimeError("状态转换: LLM返回了空的test_cases，请重试")
 
         st_data = {
             "state_machine": state_machine,

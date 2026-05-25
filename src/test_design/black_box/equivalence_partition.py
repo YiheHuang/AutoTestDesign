@@ -22,6 +22,8 @@ class EPGenerator:
 
         ec_data = result.get("equivalence_classes", []) if result else []
         test_cases = self._build_cases(result, req.id)
+        if not test_cases:
+            logger.warning("EP: LLM返回了空的test_cases，请重试")
         return ec_data, test_cases
 
     @staticmethod

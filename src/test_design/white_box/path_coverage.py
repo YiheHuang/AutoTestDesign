@@ -92,6 +92,9 @@ class PathCoverageGenerator:
                     covered_segments=segments
                 ))
 
+        if not test_cases:
+            logger.warning("PathCoverage: LLM返回了空的test_cases，请重试")
+
         # 计算覆盖率
         coverage = self._compute_coverage(req_code_mapping, tc_mappings)
         logger.info(f"路径覆盖完成: {len(test_cases)} 用例, 覆盖率 {coverage.coverage_pct}%")

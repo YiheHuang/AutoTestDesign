@@ -1,4 +1,4 @@
-"""AutoTestDesign - AI驱动的测试设计工具 主入口"""
+"""AutoTestDesign - AI驱动的测试设计工具"""
 
 import sys
 from pathlib import Path
@@ -18,11 +18,11 @@ st.set_page_config(
 
 with st.sidebar:
     st.title("AutoTestDesign")
-    st.markdown("AI驱动的自动化测试设计工具")
+    st.caption("AI-driven automated test design tool")
     st.divider()
 
 page = st.sidebar.radio(
-    "工作流程",
+    "Workflow",
     [
         "1. 需求输入",
         "2. 风险分析",
@@ -36,8 +36,7 @@ page = st.sidebar.radio(
 )
 
 st.sidebar.divider()
-st.sidebar.caption("v2.2 | ISTQB/ISO 29119-4")
-st.sidebar.caption("期末项目 - 软件测试")
+st.sidebar.caption("v2.2  |  ISTQB / ISO 29119-4")
 
 if "requirements" not in st.session_state:
     st.session_state.requirements = []

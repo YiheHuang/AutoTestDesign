@@ -1,4 +1,4 @@
-"""套件优化 (v2.2: 有效/无效区 + 风险优先级 + 合并 + 覆盖最小化)"""
+"""套件优化 — Step 6"""
 
 import copy
 import streamlit as st
@@ -7,173 +7,140 @@ from src.optimization.coverage_optimizer import CoverageOptimizer
 
 def render():
     st.title("套件优化")
-    st.markdown("管理测试用例的有效/无效状态，三种自动优化策略")
+    st.caption("有效/无效区管理 · 风险优先级 · 合并 · 覆盖最小化")
 
-    all_suites = {**st.session_state.test_suites, **st.session_state.get("custom_test_suites", {})}
-    if not all_suites:
-        st.warning("请先生成测试用例")
+    all_s = {**st.session_state.test_suites, **st.session_state.get("custom_test_suites", {})}
+    if not all_s:
+        st.warning("请先生成测试用例…")
         return
 
-    suite_options = {s.name: (s, k) for k, s in all_suites.items()}
-    selected_name = st.selectbox("选择测试套件", list(suite_options.keys()))
-    suite, suite_key = suite_options[selected_name]
+    opts = {s.name: (s, k) for k, s in all_s.items()}
+    name = st.selectbox("测试套件", list(opts.keys()))
+    suite, key = opts[name]
 
-    # ── 初始化有效用例集合 (首次进入默认全部有效) ──
-    active_key = f"active_{suite_key}"
-    if active_key not in st.session_state:
-        st.session_state[active_key] = {tc.id for tc in suite.test_cases}
-    active_ids = st.session_state[active_key]
+    ak = f"active_{key}"
+    if ak not in st.session_state:
+        st.session_state[ak] = {tc.id for tc in suite.test_cases}
+    aids = st.session_state[ak]
+    active = [tc for tc in suite.test_cases if tc.id in aids]
+    inactive = [tc for tc in suite.test_cases if tc.id not in aids]
+    has_cov = bool(suite.coverage_summary.get("tc_mappings") or suite.coverage_summary.get("coverage_report"))
 
-    active_cases = [tc for tc in suite.test_cases if tc.id in active_ids]
-    inactive_cases = [tc for tc in suite.test_cases if tc.id not in active_ids]
-
-    has_coverage = bool(suite.coverage_summary.get("tc_mappings") or suite.coverage_summary.get("coverage_report"))
-
-    # ── 概览 ──
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("全部用例", suite.total_cases)
-    with col2:
-        st.metric("有效", len(active_cases))
-    with col3:
-        st.metric("无效", len(inactive_cases))
+    c1, c2, c3 = st.columns(3)
+    c1.metric("全部", suite.total_cases)
+    c2.metric("有效", len(active))
+    c3.metric("无效", len(inactive))
 
     st.divider()
-
-    # ── 有效区 ──
-    st.subheader(f"有效区 ({len(active_cases)} 用例)")
-    if active_cases:
-        _render_zone(active_cases, suite_key, active_key, "deactivate")
+    st.subheader(f"有效区 ({len(active)})")
+    if active:
+        _zone(active, key, ak, "deactivate")
     else:
-        st.info("所有用例均已失效")
+        st.caption("无有效用例")
 
     st.divider()
-
-    # ── 无效区 ──
-    st.subheader(f"无效区 ({len(inactive_cases)} 用例)")
-    if inactive_cases:
-        _render_zone(inactive_cases, suite_key, active_key, "activate")
+    st.subheader(f"无效区 ({len(inactive)})")
+    if inactive:
+        _zone(inactive, key, ak, "activate")
     else:
-        st.info("无失效用例")
+        st.caption("无失效用例")
 
     st.divider()
+    st.subheader("自动优化")
+    t1, t2, t3 = st.tabs(["风险优先级", "合并相同用例", "覆盖最小化"])
 
-    # ── 三种优化策略 (针对有效区) ──
-    st.subheader("自动优化 (针对有效区)")
-    tab1, tab2, tab3 = st.tabs(["风险优先级", "合并相同用例", "覆盖率最小化"])
-
-    with tab1:
+    with t1:
         if not st.session_state.risk_assessments:
-            st.warning("请先在「风险分析」中完成评估")
+            st.warning("请先在「风险分析」中完成评估…")
         else:
-            budget = st.slider("保留比例", 0.1, 1.0, 1.0, 0.1, key="risk_budget")
-            min_risk = st.selectbox("最低风险等级", ["全部", "Medium及以上", "仅High"], key="min_risk")
+            budget = st.slider("保留比例", 0.1, 1.0, 1.0, 0.1, key="rb")
+            mr = st.selectbox("最低风险等级", ["全部", "Medium 及以上", "仅 High"], key="mr")
             if st.button("执行", type="primary", key="btn_risk"):
-                with st.spinner("排序中..."):
-                    risk_map = {"全部": "", "Medium及以上": "Medium", "仅High": "High"}
-                    optimizer = CoverageOptimizer()
-                    active_suite = copy.deepcopy(suite)
-                    active_suite.test_cases = active_cases
-                    result = optimizer.optimize_risk_priority(
-                        active_suite, st.session_state.risk_assessments,
-                        budget=budget, min_risk=risk_map[min_risk]
-                    )
-                    kept_ids = {tc.id for tc in result.test_cases}
-                    removed = active_ids - kept_ids
-                    st.session_state[active_key] = kept_ids
-                    st.success(f"移除 {len(removed)} 个用例到无效区")
+                with st.spinner("排序中…"):
+                    rm = {"全部": "", "Medium 及以上": "Medium", "仅 High": "High"}
+                    opt = CoverageOptimizer()
+                    as_ = copy.deepcopy(suite); as_.test_cases = active
+                    r = opt.optimize_risk_priority(as_, st.session_state.risk_assessments, budget=budget, min_risk=rm[mr])
+                    st.session_state[ak] = {tc.id for tc in r.test_cases}
+                    st.success(f"保留 {len(r.test_cases)} 用例")
                     st.rerun()
 
-    with tab2:
-        st.caption("LLM 识别输入相同、逻辑相同的用例，合并到无效区")
+    with t2:
+        st.caption("LLM 识别逻辑相同用例并合并")
         if st.button("执行", type="primary", key="btn_merge"):
-            with st.spinner("LLM 分析..."):
+            with st.spinner("LLM 分析中…"):
                 try:
-                    req_id = suite.requirement_id
-                    req = next((r for r in st.session_state.requirements if r.id == req_id), None)
-                    req_json = req.model_dump_json(indent=2) if req else "{}"
-                    optimizer = CoverageOptimizer()
-                    active_suite = copy.deepcopy(suite)
-                    active_suite.test_cases = active_cases
-                    result = optimizer.optimize_blackbox(active_suite, req_json)
-                    kept_ids = {tc.id for tc in result.test_cases}
-                    removed = active_ids - kept_ids
-                    st.session_state[active_key] = kept_ids
-                    reasons = result.coverage_summary.get("deletion_reasons", {})
-                    if reasons:
-                        for tc_id, reason in list(reasons.items())[:5]:
-                            st.caption(f"{tc_id}: {reason}")
-                    st.success(f"移除 {len(removed)} 个用例到无效区")
+                    rid = suite.requirement_id
+                    rq = next((r for r in st.session_state.requirements if r.id == rid), None)
+                    rj = rq.model_dump_json(indent=2) if rq else "{}"
+                    opt = CoverageOptimizer()
+                    as_ = copy.deepcopy(suite); as_.test_cases = active
+                    r = opt.optimize_blackbox(as_, rj)
+                    st.session_state[ak] = {tc.id for tc in r.test_cases}
+                    reasons = r.coverage_summary.get("deletion_reasons", {})
+                    for tid, reason in list(reasons.items())[:5]:
+                        st.caption(f"{tid}: {reason}")
+                    st.success(f"保留 {len(r.test_cases)} 用例")
                     st.rerun()
                 except Exception as e:
                     st.error(f"失败: {e}")
 
-    with tab3:
-        if not has_coverage:
-            st.info("需要测试用例-覆盖代码图（仅白盒套件支持）")
+    with t3:
+        if not has_cov:
+            st.info("需要覆盖代码图（仅白盒套件支持）…")
         else:
-            target_pct = st.slider("目标覆盖率 (%)", 50, 100, 80, 5, key="cov_target")
+            tp = st.slider("目标覆盖率 (%)", 50, 100, 80, 5, key="ct")
             if st.button("执行", type="primary", key="btn_cov"):
-                with st.spinner("LLM 分析..."):
+                with st.spinner("LLM 分析中…"):
                     try:
                         cs = suite.coverage_summary
-                        tc_mappings = cs.get("tc_mappings", [])
-                        coverage = cs.get("coverage_report")
-                        current_pct = coverage.coverage_pct if coverage else 100.0
-                        req_id = suite.requirement_id
-                        req = next((r for r in st.session_state.requirements if r.id == req_id), None)
-                        req_json = req.model_dump_json(indent=2) if req else "{}"
-                        optimizer = CoverageOptimizer()
-                        active_suite = copy.deepcopy(suite)
-                        active_suite.test_cases = active_cases
-                        active_mappings = [m for m in tc_mappings if m.test_case_id in active_ids]
-                        result, _ = optimizer.optimize_coverage(
-                            active_suite, active_mappings, req_json, target_pct, current_pct
-                        )
-                        kept_ids = {tc.id for tc in result.test_cases}
-                        removed = active_ids - kept_ids
-                        st.session_state[active_key] = kept_ids
-                        reasons = result.coverage_summary.get("deletion_reasons", {})
-                        if reasons:
-                            for tc_id, reason in list(reasons.items())[:5]:
-                                st.caption(f"{tc_id}: {reason}")
-                        st.success(f"移除 {len(removed)} 个用例到无效区")
+                        tcm = cs.get("tc_mappings", [])
+                        cov = cs.get("coverage_report")
+                        cp = cov.coverage_pct if cov else 100.0
+                        rid = suite.requirement_id
+                        rq = next((r for r in st.session_state.requirements if r.id == rid), None)
+                        rj = rq.model_dump_json(indent=2) if rq else "{}"
+                        opt = CoverageOptimizer()
+                        as_ = copy.deepcopy(suite); as_.test_cases = active
+                        am = [m for m in tcm if m.test_case_id in aids]
+                        r, _ = opt.optimize_coverage(as_, am, rj, tp, cp)
+                        st.session_state[ak] = {tc.id for tc in r.test_cases}
+                        reasons = r.coverage_summary.get("deletion_reasons", {})
+                        for tid, reason in list(reasons.items())[:5]:
+                            st.caption(f"{tid}: {reason}")
+                        st.success(f"保留 {len(r.test_cases)} 用例")
                         st.rerun()
                     except Exception as e:
                         st.error(f"失败: {e}")
 
-    # ── 恢复 ──
     st.divider()
-    col1, col2 = st.columns(2)
-    with col1:
+    c1, c2 = st.columns(2)
+    with c1:
         if st.button("全部恢复有效", type="secondary", use_container_width=True):
-            st.session_state[active_key] = {tc.id for tc in suite.test_cases}
-            st.success("已全部恢复到有效区")
+            st.session_state[ak] = {tc.id for tc in suite.test_cases}
+            st.success("已恢复")
             st.rerun()
-    with col2:
+    with c2:
         if st.button("清除状态记录", type="secondary", use_container_width=True):
-            st.session_state.pop(active_key, None)
+            st.session_state.pop(ak, None)
             st.success("已清除")
             st.rerun()
 
 
-def _render_zone(cases, suite_key, active_key, action):
-    """渲染用例区域，支持手动切换"""
+def _zone(cases, key, ak, action):
     for tc in cases:
-        col1, col2 = st.columns([6, 1])
-        with col1:
-            label = f"{tc.id}: {tc.title}  [{tc.technique}]"
-            if tc.category:
-                label += f" ({tc.category})"
-            st.markdown(label)
-            if tc.description:
-                st.caption(tc.description[:80])
-        with col2:
-            if action == "deactivate":
-                if st.button("失效", key=f"deact_{suite_key}_{tc.id}"):
-                    st.session_state[active_key].discard(tc.id)
-                    st.rerun()
-            else:
-                if st.button("激活", key=f"act_{suite_key}_{tc.id}"):
-                    st.session_state[active_key].add(tc.id)
-                    st.rerun()
+        c1, c2 = st.columns([6, 1])
+        lbl = f"{tc.id}  {tc.title}  [{tc.technique}]"
+        if tc.category:
+            lbl += f" ({tc.category})"
+        c1.markdown(lbl)
+        if tc.description:
+            c1.caption(tc.description[:80])
+        if action == "deactivate":
+            if c2.button("失效", key=f"de_{key}_{tc.id}"):
+                st.session_state[ak].discard(tc.id)
+                st.rerun()
+        else:
+            if c2.button("激活", key=f"ac_{key}_{tc.id}"):
+                st.session_state[ak].add(tc.id)
+                st.rerun()
