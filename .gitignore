@@ -36,3 +36,4 @@ Thumbs.db
 skills-lock.json
 .claude/
 .pytest_cache/
+logs/

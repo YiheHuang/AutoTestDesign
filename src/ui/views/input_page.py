@@ -20,7 +20,8 @@ def render():
         if fp:
             st.session_state["code_folder"] = fp
             if os.path.isdir(fp):
-                n = sum(1 for f in os.listdir(fp) if f.endswith(".py"))
+                import os as _os
+                n = sum(1 for r, ds, fs in _os.walk(fp) for f in fs if f.endswith(".py") and f != "__init__.py")
                 st.caption(f"{n} 个 .py 文件")
             else:
                 st.error("路径不存在")

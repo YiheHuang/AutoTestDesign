@@ -206,6 +206,6 @@ class AIExtractor:
                             sources[rel_path] = fh.read()
                     except Exception:
                         pass
-            if len(sources) >= 10:
+            if len(sources) >= 50:
                 break
         return sources

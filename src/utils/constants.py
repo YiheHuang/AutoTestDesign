@@ -26,13 +26,17 @@ MAX_RETRIES = 3
 
 # Flask API端点映射 (用于pytest导出fallback)
 ENDPOINT_KEYWORDS = {
-    "login": "/login",
-    "forgot": "/forgot-password",
-    "reset": "/reset-password",
-    "logout": "/logout",
+    "login": "/api/login",
+    "forgot": "/api/forgot-password",
+    "reset": "/api/reset-password",
+    "logout": "/api/logout",
     "health": "/health",
+    "project": "/api/projects",
+    "task": "/api/projects/1/tasks",
+    "统计": "/api/projects/1/stats",
+    "分配": "/api/tasks/1/assign",
 }
-DEFAULT_ENDPOINT = "/register"
+DEFAULT_ENDPOINT = "/api/register"
 
 # 有效HTTP状态码
 VALID_STATUS_CODES = [200, 201, 400, 401, 409, 423]

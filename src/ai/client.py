@@ -83,7 +83,10 @@ class AIClient:
                     ]
                 )
                 content = response.choices[0].message.content or "{}"
-                return json.loads(content)
+                try:
+                    return json.loads(content)
+                except json.JSONDecodeError:
+                    return self._repair_json(content)
 
             except json.JSONDecodeError as e:
                 last_error = e
@@ -97,6 +100,71 @@ class AIClient:
         logger.error(f"AI调用全部重试失败: {last_error}")
         return {}
 
+    def _repair_json(self, text: str) -> dict[str, Any]:
+        """尝试修复 LLM 返回的常见 JSON 格式问题"""
+        import re
+        text = text.strip()
+
+        # 1. 提取 markdown 代码块
+        if "```json" in text:
+            s = text.index("```json") + 7
+            e = text.index("```", s) if "```" in text[s:] else len(text)
+            text = text[s:e].strip()
+        elif "```" in text:
+            s = text.index("```") + 3
+            e = text.index("```", s) if "```" in text[s:] else len(text)
+            text = text[s:e].strip()
+
+        # 2. 清理
+        text = text.lstrip("﻿")
+        text = re.sub(r',\s*([}\]])', r'\1', text)  # 尾随逗号
+
+        # 3. 直接解析
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+        # 4. 单引号→双引号 (LLM偶尔输出Python dict风格)
+        try:
+            return json.loads(text.replace("'", '"'))
+        except json.JSONDecodeError:
+            pass
+
+        # 5. 缺失逗号修复
+        fixed = text
+        fixed = re.sub(r'"\s+(?=")', r'", ', fixed)          # "a" "b" -> "a", "b"
+        fixed = re.sub(r'("\s*)\n(\s*")', r'\1,\n\2', fixed) # "a"\n"b" -> "a",\n"b"
+        fixed = re.sub(r'(\d)\s+(")', r'\1, \2', fixed)      # 123 "k"
+        fixed = re.sub(r'([}\]])\s+(")', r'\1, \2', fixed)   # } "k"
+        fixed = re.sub(r'("[^"]*")\s+(\{)', r'\1, \2', fixed)# "v" {
+
+        try:
+            return json.loads(fixed)
+        except json.JSONDecodeError:
+            pass
+
+        # 6. 截断到最后一个完整的顶级对象
+        depth = 0
+        in_str = False
+        last = 0
+        for i, ch in enumerate(fixed):
+            if ch == '"' and (i == 0 or fixed[i-1] != '\\'):
+                in_str = not in_str
+            if not in_str:
+                if ch in '{[': depth += 1
+                elif ch in '}]':
+                    depth -= 1
+                    if depth == 0:
+                        last = i + 1
+        if last > 0:
+            try:
+                return json.loads(fixed[:last])
+            except json.JSONDecodeError:
+                pass
+
+        raise json.JSONDecodeError("All repair strategies failed", text, 0)
+
     def chat_with_json(
         self,
         system_prompt: str,
@@ -104,29 +172,33 @@ class AIClient:
         temperature: float = DEFAULT_TEMPERATURE,
         max_retries: int = MAX_RETRIES
     ) -> dict[str, Any]:
-        """对话+JSON解析（不用原生JSON mode时使用）"""
+        """JSON对话（优先使用JSON mode，失败后plain text+修复）"""
         last_error = None
         for attempt in range(max_retries):
             try:
-                text = self.chat(system_prompt, user_message, temperature)
-                # 尝试从markdown代码块中提取JSON
-                if "```json" in text:
-                    start = text.index("```json") + 7
-                    end = text.index("```", start)
-                    text = text[start:end]
-                elif "```" in text:
-                    start = text.index("```") + 3
-                    end = text.index("```", start)
-                    text = text[start:end]
-                return json.loads(text.strip())
-            except (json.JSONDecodeError, ValueError) as e:
-                last_error = e
-                logger.warning(f"JSON解析失败 (attempt {attempt + 1}/{max_retries}): {e}")
-                time.sleep(1 * (attempt + 1))
+                # 优先使用 JSON mode (强制合法JSON)
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    temperature=temperature,
+                    max_tokens=DEFAULT_MAX_TOKENS,
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message}
+                    ]
+                )
+                text = response.choices[0].message.content or "{}"
+                return self._repair_json(text)
             except Exception as e:
                 last_error = e
-                logger.error(f"AI调用失败 (attempt {attempt + 1}/{max_retries}): {e}")
-                time.sleep(2 * (attempt + 1))
+                logger.warning(f"JSON mode失败 (attempt {attempt + 1}/{max_retries}): {e}, 尝试plain text")
+                try:
+                    text = self.chat(system_prompt, user_message, temperature)
+                    return self._repair_json(text)
+                except Exception as e2:
+                    last_error = e2
+                    logger.warning(f"Plain text也失败 (attempt {attempt + 1}/{max_retries}): {e2}")
+                time.sleep(1 * (attempt + 1))
 
         logger.error(f"AI调用全部重试失败: {last_error}")
         return {}
