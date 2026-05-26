@@ -1,105 +1,101 @@
-# AutoTestDesign - AI驱动的自动化测试设计工具
+# AutoTestDesign — AI-driven automated test design tool
 
-AutoTestDesign 是一款基于 AI 的软件测试设计工具，能够自动执行需求分析、风险评估和系统化测试用例生成，支持 ISTQB 测试理论和 ISO/IEC/IEEE 29119-4 标准。
+AutoTestDesign applies LLM to automate requirements analysis, risk assessment, and systematic test case generation following ISTQB and ISO/IEC/IEEE 29119-4.
 
-## 功能特性
+## Target System Under Test
 
-| 功能 | 说明 |
-|------|------|
-| 需求输入 | 代码仓库 + 需求文本 -> LLM 生成标准需求 (REQ-001~00N) + 需求-代码映射 |
-| 风险分析 | LLM 评估每项需求的 risk_level (High/Medium/Low) 和风险因素 |
-| 黑盒测试设计 | 等价类划分(EP) + 边界值分析(BVA) + 判定表(DT)，LLM 生成分析表与测试用例 |
-| 白盒测试设计 | 路径覆盖: LLM 分析执行路径 -> 测试用例 + 覆盖代码图 + 覆盖率计算 |
-| 套件优化 | 黑盒: LLM 合并逻辑相同用例 / 白盒: LLM 覆盖率优化 + 一键恢复原始套件 |
-| 导出 | Pytest 可运行脚本 (Flask test_client, 不走网络) + JSON 结构化文档 |
+**Task Management Platform** — a Flask + SQLite REST API with three modules:
 
-## 快速开始
+| Module | Endpoints | Risk |
+|--------|----------|------|
+| User Auth | `/api/register`, `/api/login`, `/api/forgot-password`, `/api/reset-password`, `/api/logout` | High |
+| Projects | `/api/projects` (CRUD), `/api/projects/<id>/stats` | Medium |
+| Tasks | `/api/projects/<id>/tasks` (CRUD), `/api/tasks/<id>/assign`, `/api/users/<name>/tasks` | Medium/Low |
 
-### 环境要求
+The system intentionally contains 11 planted defects (see `flask_app/planted_bugs.md`) for test tool validation.
 
-- Python 3.11+
-- yunwu.ai API Key
+## Workflow — 7 Steps
 
-### 安装
+```
+1. Requirements Input  -> Code folder + requirements (CSV/TXT/Paste) -> Standardized REQs + Requirement-Code Map
+2. Risk Analysis       -> LLM evaluates risk_level, test_priority, and risk_factors per requirement
+3. Black-Box Design    -> EP / BVA / DT — LLM generates analysis tables + test cases
+4. White-Box Design    -> Path Coverage + State Transition — LLM generates coverage map + computes coverage %
+5. Oracle Generation   -> Fill test data -> LLM derives expected results -> Save to custom suite
+6. Suite Optimization  -> Active/Inactive zones, risk priority, merge duplicates, coverage minimization
+7. Export              -> Pytest (Flask test_client) / JSON
+```
+
+## Quick Start
 
 ```bash
 cd final_project
 pip install -r requirements.txt
-pip install -r flask_app/requirements.txt
-cp .env.example .env
-# 编辑 .env: 填入 OPENAI_API_KEY
+cp .env.example .env   # edit: paste OPENAI_API_KEY
+
+streamlit run src/ui/app.py
 ```
 
-### .env 配置
-
-```env
-OPENAI_API_KEY=你的API_KEY
-OPENAI_BASE_URL=https://yunwu.ai/v1
-OPENAI_MODEL=gpt-4o
-```
-
-### 运行
+### Run Tests
 
 ```bash
-# 启动 Web UI
-streamlit run src/ui/app.py
-
-# 运行单元测试
+# Unit tests for the tool itself
 python -m pytest tests/ -v
 
-# 运行生成的端到端测试
+# Generated end-to-end tests (after export via UI)
 python -m pytest flask_app/tests/test_generated.py -v
 ```
 
-浏览器打开 http://localhost:8501 即可使用。
-
-## 工作流程 (6步)
-
-```
-1. 需求输入     -> 选择代码文件夹 + 粘贴需求文本 -> 生成标准需求 + 需求-代码图
-2. 风险分析     -> LLM 评估 -> risk_level + risk_factors
-3. 黑盒测试设计  -> 选需求 + 选技术 -> LLM 生成 EP/BVA/DT 分析表 + 测试用例
-4. 白盒测试设计  -> 选需求 -> LLM 路径覆盖 -> 用例 + 覆盖代码图 + 覆盖率
-5. 套件优化     -> 黑盒: LLM合并 / 白盒: LLM覆盖率优化 / 恢复原始套件
-6. 导出         -> Pytest (Flask test_client) / JSON
-```
-
-## 项目结构
+## Project Structure
 
 ```
 final_project/
-├── flask_app/                 # 被测应用 (Flask 用户注册登录系统)
-├── src/
-│   ├── models/               # Pydantic 数据模型
-│   ├── parser/               # 需求-代码映射 (LLM)
-│   ├── risk/                 # 风险分析 (LLM)
-│   ├── test_design/
-│   │   ├── black_box/        # EP / BVA / DT
-│   │   └── white_box/        # 路径覆盖
-│   ├── optimization/         # LLM 套件优化
-│   ├── export/               # Pytest / JSON 导出
-│   ├── ai/                   # OpenAI SDK + 提示词模板
-│   ├── ui/                   # Streamlit 界面
-│   └── utils/                # 常量 / 日志
-├── tests/                    # 单元测试
-├── data/                     # 示例输入
-├── guidebook.md              # 教学指南
-└── README.md
+|
+|-- flask_app/                    # Target application (Task Management Platform)
+|   |-- app.py                    #   create_app() factory
+|   |-- config.py                 #   Constants
+|   |-- models/                   #   database, project, task
+|   |-- routes/                   #   auth, projects, tasks (Blueprints)
+|   |-- utils/validators.py       #   9 validation functions
+|   |-- planted_bugs.md           #   11 intentional defects
+|   |-- tests/                    #   Generated pytest output
+|
+|-- src/
+|   |-- models/                   # Pydantic data models
+|   |-- parser/                   # Requirement extraction + code parsing
+|   |-- risk/                     # LLM risk analysis
+|   |-- test_design/
+|   |   |-- black_box/            # EP, BVA, DT generators
+|   |   |-- white_box/            # PathCoverage, StateTransition
+|   |-- optimization/             # Suite optimization (risk/merge/coverage)
+|   |-- export/                   # Pytest + JSON exporters
+|   |-- ai/                       # OpenAI SDK client + prompts
+|   |-- ui/                       # Streamlit (app.py + 7 views)
+|   |-- utils/                    # Constants, logger
+|
+|-- docs/                         # Deliverables
+|   |-- 01_risk_analysis_report.md
+|   |-- 02_test_plan.md
+|   |-- 03_detailed_test_design.md
+|
+|-- data/sample_input/            # Sample requirements (CSV + TXT)
+|-- tests/                        # Tool unit tests
+|-- guidebook.md                  # Reference manual
+|-- README.md
 ```
 
-## 技术栈
+## Tech Stack
 
-| 层次 | 技术 |
-|------|------|
-| 语言 | Python 3.11+ |
+| Layer | Technology |
+|-------|-----------|
+| Language | Python 3.11+ |
 | AI | OpenAI SDK -> yunwu.ai -> GPT-4o |
-| 界面 | Streamlit |
-| 数据模型 | Pydantic v2 |
-| 被测应用 | Flask + SQLite |
-| 可视化 | plotly |
-| 测试框架 | pytest |
+| UI | Streamlit |
+| Data | Pydantic v2 |
+| Target App | Flask 3.0 + SQLite |
+| Testing | pytest + Flask test_client |
 
-## 参考标准
+## Standards
 
 - ISTQB Foundation Level (CTFL)
 - ISO/IEC/IEEE 29119-4: Test Techniques
