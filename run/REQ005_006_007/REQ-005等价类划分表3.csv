@@ -1,0 +1,6 @@
+﻿类型,描述,代表值
+valid,优先级为枚举值Low,Low
+valid,优先级为枚举值Medium,Medium
+valid,优先级为枚举值High,High
+invalid,优先级为非法枚举值,Critical
+invalid,优先级为null,None

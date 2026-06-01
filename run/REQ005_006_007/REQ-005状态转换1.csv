@@ -1,0 +1,11 @@
+﻿ID,名称,初始,终止
+S1,项目不存在,true,false
+S2,任务创建中,false,false
+S3,任务已创建,false,false
+S4,任务详情查看,false,false
+S5,任务更新中,false,false
+S6,任务已更新,false,false
+S7,任务删除中,false,false
+S8,任务已删除,false,true
+S9,任务分配中,false,false
+S10,任务已分配,false,false

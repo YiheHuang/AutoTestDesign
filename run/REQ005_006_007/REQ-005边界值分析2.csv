@@ -1,0 +1,6 @@
+﻿边界点,值,通过
+invalid-1,Very Low,No
+valid-1,Low,Yes
+valid-2,Medium,Yes
+valid-3,High,Yes
+invalid+1,Very High,No

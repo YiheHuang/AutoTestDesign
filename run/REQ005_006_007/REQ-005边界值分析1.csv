@@ -1,0 +1,7 @@
+﻿边界点,值,通过
+min-1,,No
+min,a,Yes
+min+1,aa,Yes
+max-1,a,Yes
+max,a,Yes
+max+1,a,No

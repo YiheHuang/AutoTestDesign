@@ -1,0 +1,5 @@
+﻿ID,名称,初始,终止
+S1,任务不存在,true,false
+S2,任务存在,false,false
+S3,任务已分配,false,false
+S4,分配失败,false,false

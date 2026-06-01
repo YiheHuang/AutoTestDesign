@@ -1,0 +1,5 @@
+﻿类型,描述,代表值
+valid,assignee 是一个已注册用户,registered_user_123
+invalid,assignee 是一个未注册用户,unregistered_user_456
+invalid,assignee 是一个空字符串,
+invalid,assignee 是一个 null 值,None

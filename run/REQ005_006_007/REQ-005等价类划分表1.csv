@@ -1,0 +1,5 @@
+﻿类型,描述,代表值
+valid,标题为非空字符串，长度不超过200,有效标题
+invalid,标题为空字符串,
+invalid,标题长度超过200,a
+invalid,标题为null,None

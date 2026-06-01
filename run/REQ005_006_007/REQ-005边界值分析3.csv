@@ -1,0 +1,6 @@
+﻿边界点,值,通过
+invalid-1,not_started,No
+valid-1,todo,Yes
+valid-2,in_progress,Yes
+valid-3,done,Yes
+invalid+1,completed,No

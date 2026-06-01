@@ -37,3 +37,4 @@ skills-lock.json
 .claude/
 .pytest_cache/
 logs/
+.agents/

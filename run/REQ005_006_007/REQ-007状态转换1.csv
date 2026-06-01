@@ -1,0 +1,4 @@
+﻿ID,名称,初始,终止
+S1,项目不存在,true,false
+S2,项目存在,false,false
+S3,统计完成,false,true

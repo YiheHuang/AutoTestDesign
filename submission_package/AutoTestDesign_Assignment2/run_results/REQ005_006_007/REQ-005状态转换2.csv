@@ -1,0 +1,10 @@
+﻿ID,从,到,触发,守卫,动作
+T1,S1,S2,POST /projects/<project_id>/tasks,项目存在,验证输入数据
+T2,S2,S3,POST /projects/<project_id>/tasks,输入数据有效,创建任务
+T3,S3,S4,GET /tasks/<task_id>,任务存在,返回任务详情
+T4,S4,S5,PUT /tasks/<task_id>,任务存在,验证更新数据
+T5,S5,S6,PUT /tasks/<task_id>,更新数据有效,更新任务
+T6,S6,S7,DELETE /tasks/<task_id>,任务存在,检查任务状态
+T7,S7,S8,DELETE /tasks/<task_id>,任务状态非done,删除任务
+T8,S3,S9,POST /tasks/<task_id>/assign,任务存在,验证负责人
+T9,S9,S10,POST /tasks/<task_id>/assign,负责人有效,分配任务负责人

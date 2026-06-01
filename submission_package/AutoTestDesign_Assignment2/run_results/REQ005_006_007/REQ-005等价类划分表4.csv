@@ -1,0 +1,6 @@
+﻿类型,描述,代表值
+valid,状态为枚举值todo,todo
+valid,状态为枚举值in_progress,in_progress
+valid,状态为枚举值done,done
+invalid,状态为非法枚举值,archived
+invalid,状态为null,None
