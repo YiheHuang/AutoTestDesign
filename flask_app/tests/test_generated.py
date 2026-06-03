@@ -1,4 +1,4 @@
-"""AutoTestDesign 自动生成 | 2026-06-01T13:56:52.686288"""
+"""AutoTestDesign 自动生成 | 2026-06-03T10:33:27.372758"""
 import pytest, json, sys, os
 
 _root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -30,108 +30,98 @@ def clean_db():
 class TestBoundaryValueAnalysis:
 
     def test_tc_bva_req_005_001(self, client):
-        """Title为空 [Boundary Value Analysis/Boundary]"""
+        """Title is empty [Boundary Value Analysis/Boundary]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": ""}),
+            data=json.dumps({"title": "", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 任务创建失败，title为必填项
+        # 预期: Validation error: Title is required
 
     def test_tc_bva_req_005_002(self, client):
-        """Title长度为1 [Boundary Value Analysis/Boundary]"""
+        """Title at minimum length [Boundary Value Analysis/Boundary]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "a"}),
+            data=json.dumps({"title": "a", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 任务创建成功
+        # 预期: Task created successfully
 
     def test_tc_bva_req_005_003(self, client):
-        """Title长度为200 [Boundary Value Analysis/Boundary]"""
+        """Title exceeds maximum length [Boundary Value Analysis/Boundary]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "a"}),
+            data=json.dumps({"title": "a", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 任务创建成功
+        # 预期: Validation error: Title exceeds maximum length
 
     def test_tc_bva_req_005_004(self, client):
-        """Title长度为201 [Boundary Value Analysis/Boundary]"""
+        """Invalid priority value [Boundary Value Analysis/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "a"}),
+            data=json.dumps({"title": "Valid Title", "priority": "Very High", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 任务创建失败，title长度超出限制
+        # 预期: Validation error: Invalid priority value
 
     def test_tc_bva_req_005_005(self, client):
-        """Priority为非法值 [Boundary Value Analysis/Invalid]"""
+        """Invalid status value [Boundary Value Analysis/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"priority": "Very Low"}),
+            data=json.dumps({"title": "Valid Title", "priority": "Medium", "status": "completed"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 任务创建失败，无效的优先级值
+        # 预期: Validation error: Invalid status value
 
     def test_tc_bva_req_005_006(self, client):
-        """Status为非法值 [Boundary Value Analysis/Invalid]"""
+        """Valid input data [Boundary Value Analysis/Valid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"status": "not_started"}),
+            data=json.dumps({"title": "Valid Title", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 任务创建失败，无效的状态值
+        # 预期: Task created successfully
 
-    def test_tc_bva_req_006_001(self, client):
-        """Valid registered user assignment [Boundary Value Analysis/Valid]"""
-        response = client.post(
-            "/api/projects/1/tasks",
-            data=json.dumps({"assignee": "registered_user_123"}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 分配成功
+class TestCustomOracle:
 
-    def test_tc_bva_req_006_002(self, client):
-        """Invalid user assignment [Boundary Value Analysis/Invalid]"""
+    def test_tc_custom_req_005_001(self, client):
+        """TC-CUSTOM-REQ-005-001 [Custom Oracle/Invalid]"""
         response = client.post(
-            "/api/projects/1/tasks",
-            data=json.dumps({"assignee": "unregistered_user_456"}),
+            "/api/register",
+            data=json.dumps({"title": "", "description": "", "priority": "", "status": ""}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 分配失败
+        # 预期: {"error": "任务标题不能为空", "field": "title"}
 
 class TestDecisionTable:
 
     def test_tc_dt_req_005_001(self, client):
-        """测试用例1: 项目存在且优先级合法 [DecisionTable/Valid]"""
+        """创建任务 - 有效输入 [DecisionTable/Valid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"project_id": "123", "priority": "Medium"}),
+            data=json.dumps({"project_id": "exists", "title": "有效任务标题", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -140,10 +130,10 @@ class TestDecisionTable:
         # 预期: 任务创建成功
 
     def test_tc_dt_req_005_002(self, client):
-        """测试用例2: 项目存在但优先级非法 [DecisionTable/Invalid]"""
+        """拒绝任务 - 优先级非法 [DecisionTable/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"project_id": "123", "priority": "InvalidPriority"}),
+            data=json.dumps({"project_id": "exists", "title": "有效任务标题", "priority": "InvalidPriority", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -152,22 +142,10 @@ class TestDecisionTable:
         # 预期: 无效的优先级值
 
     def test_tc_dt_req_005_003(self, client):
-        """测试用例3: 项目不存在且优先级非法 [DecisionTable/Invalid]"""
+        """拒绝任务 - 项目不存在 [DecisionTable/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"project_id": "not_exists", "priority": "InvalidPriority"}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 无效的优先级值
-
-    def test_tc_dt_req_005_004(self, client):
-        """测试用例4: 项目不存在但优先级合法 [DecisionTable/Invalid]"""
-        response = client.post(
-            "/api/register",
-            data=json.dumps({"project_id": "not_exists", "priority": "Low"}),
+            data=json.dumps({"project_id": "not_exists", "title": "有效任务标题", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -175,65 +153,17 @@ class TestDecisionTable:
         assert response_json is not None
         # 预期: 任务创建被拒绝
 
-    def test_tc_dt_req_006_001(self, client):
-        """测试用例1: assignee存在且为注册用户 [DecisionTable/Valid]"""
+    def test_tc_dt_req_005_004(self, client):
+        """拒绝任务 - 项目不存在且优先级非法 [DecisionTable/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"assignee": "registered_user_1"}),
+            data=json.dumps({"project_id": "not_exists", "title": "有效任务标题", "priority": "InvalidPriority", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 分配任务
-
-    def test_tc_dt_req_006_002(self, client):
-        """测试用例2: assignee存在但不是注册用户 [DecisionTable/Invalid]"""
-        response = client.post(
-            "/api/register",
-            data=json.dumps({"assignee": "unregistered_user_1"}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 不分配任务
-
-    def test_tc_dt_req_006_003(self, client):
-        """测试用例3: assignee不存在 [DecisionTable/Invalid]"""
-        response = client.post(
-            "/api/register",
-            data=json.dumps({"assignee": null}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 不分配任务
-
-    def test_tc_dt_req_007_001(self, client):
-        """任务存在时返回统计结果 [DecisionTable/Valid]"""
-        response = client.post(
-            "/api/projects/1/stats",
-            data=json.dumps({"任务ID": "12345"}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 统计结果
-
-    def test_tc_dt_req_007_002(self, client):
-        """任务不存在时无动作 [DecisionTable/Invalid]"""
-        response = client.post(
-            "/api/register",
-            data=json.dumps({"任务ID": null}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 无动作
+        # 预期: 无效的优先级值
 
 class TestEquivalencePartitioning:
 
@@ -241,7 +171,7 @@ class TestEquivalencePartitioning:
         """有效标题和默认优先级 [Equivalence Partitioning/Valid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "有效标题", "description": "有效描述", "priority": "Medium", "status": "todo"}),
+            data=json.dumps({"title": "有效标题", "description": "任意描述", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -253,7 +183,7 @@ class TestEquivalencePartitioning:
         """标题为空 [Equivalence Partitioning/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "", "description": "有效描述", "priority": "Medium", "status": "todo"}),
+            data=json.dumps({"title": "", "description": "任意描述", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -277,7 +207,7 @@ class TestEquivalencePartitioning:
         """标题为null [Equivalence Partitioning/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": null, "description": "有效描述", "priority": "Medium", "status": "todo"}),
+            data=json.dumps({"title": null, "description": "任意描述", "priority": "Medium", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -286,10 +216,10 @@ class TestEquivalencePartitioning:
         # 预期: 标题不能为空
 
     def test_tc_ep_req_005_005(self, client):
-        """非法优先级 [Equivalence Partitioning/Invalid]"""
+        """优先级为非法枚举值 [Equivalence Partitioning/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "有效标题", "description": "有效描述", "priority": "Critical", "status": "todo"}),
+            data=json.dumps({"title": "有效标题", "description": "任意描述", "priority": "Urgent", "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -301,7 +231,7 @@ class TestEquivalencePartitioning:
         """优先级为null [Equivalence Partitioning/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "有效标题", "description": "有效描述", "priority": null, "status": "todo"}),
+            data=json.dumps({"title": "有效标题", "description": "任意描述", "priority": null, "status": "todo"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -310,10 +240,10 @@ class TestEquivalencePartitioning:
         # 预期: 无效的优先级值
 
     def test_tc_ep_req_005_007(self, client):
-        """非法状态 [Equivalence Partitioning/Invalid]"""
+        """状态为非法枚举值 [Equivalence Partitioning/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "有效标题", "description": "有效描述", "priority": "Medium", "status": "archived"}),
+            data=json.dumps({"title": "有效标题", "description": "任意描述", "priority": "Medium", "status": "archived"}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -325,7 +255,7 @@ class TestEquivalencePartitioning:
         """状态为null [Equivalence Partitioning/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "有效标题", "description": "有效描述", "priority": "Medium", "status": null}),
+            data=json.dumps({"title": "有效标题", "description": "任意描述", "priority": "Medium", "status": null}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -333,61 +263,13 @@ class TestEquivalencePartitioning:
         assert response_json is not None
         # 预期: 无效的状态值
 
-    def test_tc_ep_req_006_001(self, client):
-        """Valid assignee [Equivalence Partitioning/Valid]"""
-        response = client.post(
-            "/api/register",
-            data=json.dumps({"assignee": "registered_user_123"}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 分配成功
-
-    def test_tc_ep_req_006_002(self, client):
-        """Invalid assignee - unregistered user [Equivalence Partitioning/Invalid]"""
-        response = client.post(
-            "/api/register",
-            data=json.dumps({"assignee": "unregistered_user_456"}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 分配失败
-
-    def test_tc_ep_req_006_003(self, client):
-        """Invalid assignee - empty string [Equivalence Partitioning/Invalid]"""
-        response = client.post(
-            "/api/register",
-            data=json.dumps({"assignee": ""}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 分配失败
-
-    def test_tc_ep_req_006_004(self, client):
-        """Invalid assignee - null value [Equivalence Partitioning/Invalid]"""
-        response = client.post(
-            "/api/register",
-            data=json.dumps({"assignee": null}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 分配失败
-
 class TestPathCoverage:
 
     def test_tc_pc_001(self, client):
-        """创建任务成功 [PathCoverage/Valid]"""
+        """用户注册成功 [PathCoverage/Valid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"project_id": 1, "title": "Test Task", "description": "This is a test task", "priority": "Medium", "status": "todo", "assignee": "user1", "due_date": "2023-12-31"}),
+            data=json.dumps({"username": "validUser123", "password": "ValidPass123!", "confirm_password": "ValidPass123!", "email": "valid.email@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
@@ -395,171 +277,135 @@ class TestPathCoverage:
         assert response_json is not None
 
     def test_tc_pc_002(self, client):
-        """项目不存在时创建任务 [PathCoverage/Invalid]"""
+        """用户名已存在 [PathCoverage/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"project_id": 999, "title": "Test Task", "description": "This is a test task", "priority": "Medium", "status": "todo", "assignee": "user1", "due_date": "2023-12-31"}),
+            data=json.dumps({"username": "existingUser", "password": "ValidPass123!", "confirm_password": "ValidPass123!", "email": "new.email@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: {"status_code": 404, "error": "项目不存在"}
+        # 预期: {"status_code": 409, "response_body": {"error": "用户名已被注册", "field": "username"}}
 
     def test_tc_pc_003(self, client):
-        """任务标题为空 [PathCoverage/Invalid]"""
+        """邮箱已存在 [PathCoverage/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"project_id": 1, "title": "", "description": "This is a test task", "priority": "Medium", "status": "todo", "assignee": "user1", "due_date": "2023-12-31"}),
+            data=json.dumps({"username": "newUser", "password": "ValidPass123!", "confirm_password": "ValidPass123!", "email": "existing.email@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: {"status_code": 400, "error": "标题不能为空", "field": "title"}
+        # 预期: {"status_code": 409, "response_body": {"error": "邮箱已被注册", "field": "email"}}
 
     def test_tc_pc_004(self, client):
-        """非法优先级 [PathCoverage/Invalid]"""
+        """密码不一致 [PathCoverage/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"project_id": 1, "title": "Test Task", "description": "This is a test task", "priority": "InvalidPriority", "status": "todo", "assignee": "user1", "due_date": "2023-12-31"}),
+            data=json.dumps({"username": "newUser", "password": "ValidPass123!", "confirm_password": "DifferentPass123!", "email": "new.email@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: {"status_code": 400, "error": "无效的优先级值"}
+        # 预期: {"status_code": 400, "response_body": {"error": "两次输入的密码不一致", "field": "confirm_password"}}
 
     def test_tc_pc_005(self, client):
-        """任务不存在时更新任务 [PathCoverage/Invalid]"""
+        """年龄不符合要求 [PathCoverage/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"task_id": 999, "title": "Updated Task Title"}),
+            data=json.dumps({"username": "newUser", "password": "ValidPass123!", "confirm_password": "ValidPass123!", "email": "new.email@example.com", "age": 15}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: {"status_code": 404, "error": "任务不存在"}
+        # 预期: {"status_code": 400, "response_body": {"error": "未成年不可注册（需年满18岁）", "field": "age"}}
 
     def test_tc_pc_006(self, client):
-        """删除已完成任务 [PathCoverage/Invalid]"""
+        """无效的用户名格式 [PathCoverage/Invalid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"task_id": 1}),
+            data=json.dumps({"username": "invalid@user", "password": "ValidPass123!", "confirm_password": "ValidPass123!", "email": "new.email@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: {"status_code": 400, "error": "已完成的任务不能被删除"}
+        # 预期: {"status_code": 400, "response_body": {"error": "用户名只能包含字母和数字", "field": "username"}}
 
 class TestStateTransition:
 
-    def test_tc_st_req_005_001(self, client):
-        """测试用例1: 从项目不存在到任务删除 [State Transition/Valid]"""
+    def test_tc_st_req_001_001(self, client):
+        """成功注册测试 [State Transition/Valid]"""
         response = client.post(
             "/api/register",
-            data=json.dumps({"title": "任务1", "priority": "Medium", "status": "todo"}),
+            data=json.dumps({"username": "testuser", "password": "Test@1234", "confirm_password": "Test@1234", "email": "test@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 进入状态S2: 任务创建中
+        # 预期: 进入验证用户名状态
 
-    def test_tc_st_req_005_002(self, client):
-        """测试用例2: 从项目不存在到任务分配完成 [State Transition/Valid]"""
+    def test_tc_st_req_001_002(self, client):
+        """用户名验证失败测试 [State Transition/Invalid]"""
         response = client.post(
-            "/api/tasks/1/assign",
-            data=json.dumps({"title": "任务2", "priority": "Low", "status": "todo"}),
+            "/api/register",
+            data=json.dumps({"username": "ab", "password": "Test@1234", "confirm_password": "Test@1234", "email": "test@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 进入状态S2: 任务创建中
+        # 预期: 进入验证用户名状态
 
-    def test_tc_st_req_006_001(self, client):
-        """测试任务不存在时的分配行为 [State Transition/Valid]"""
+    def test_tc_st_req_001_003(self, client):
+        """密码验证失败测试 [State Transition/Invalid]"""
         response = client.post(
-            "/api/tasks/1/assign",
-            data=json.dumps({"task_id": 999, "assignee": "user1"}),
+            "/api/register",
+            data=json.dumps({"username": "testuser", "password": "123", "confirm_password": "123", "email": "test@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 返回错误消息: 任务不存在
+        # 预期: 进入验证用户名状态
 
-    def test_tc_st_req_006_002(self, client):
-        """测试任务存在且分配成功 [State Transition/Valid]"""
+    def test_tc_st_req_001_004(self, client):
+        """邮箱验证失败测试 [State Transition/Invalid]"""
         response = client.post(
-            "/api/tasks/1/assign",
-            data=json.dumps({"task_id": 1, "assignee": "user1"}),
+            "/api/register",
+            data=json.dumps({"username": "testuser", "password": "Test@1234", "confirm_password": "Test@1234", "email": "invalid-email", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 任务分配成功，返回更新后的任务信息
+        # 预期: 进入验证用户名状态
 
-    def test_tc_st_req_006_003(self, client):
-        """测试任务存在但分配失败 [State Transition/Valid]"""
+    def test_tc_st_req_001_005(self, client):
+        """年龄验证失败测试 [State Transition/Invalid]"""
         response = client.post(
-            "/api/tasks/1/assign",
-            data=json.dumps({"task_id": 1, "assignee": ""}),
+            "/api/register",
+            data=json.dumps({"username": "testuser", "password": "Test@1234", "confirm_password": "Test@1234", "email": "test@example.com", "age": 17}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 返回错误消息: 负责人不能为空
+        # 预期: 进入验证用户名状态
 
-    def test_tc_st_req_006_004(self, client):
-        """测试任务已分配且重新分配成功 [State Transition/Valid]"""
+    def test_tc_st_req_001_006(self, client):
+        """唯一性检查失败测试 [State Transition/Invalid]"""
         response = client.post(
-            "/api/tasks/1/assign",
-            data=json.dumps({"task_id": 1, "assignee": "user2"}),
+            "/api/register",
+            data=json.dumps({"username": "existinguser", "password": "Test@1234", "confirm_password": "Test@1234", "email": "existing@example.com", "age": 25}),
             content_type="application/json"
         )
         assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
         response_json = response.get_json()
         assert response_json is not None
-        # 预期: 任务重新分配成功，返回更新后的任务信息
-
-    def test_tc_st_req_006_005(self, client):
-        """测试任务已分配但重新分配失败 [State Transition/Valid]"""
-        response = client.post(
-            "/api/tasks/1/assign",
-            data=json.dumps({"task_id": 1, "assignee": ""}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 返回错误消息: 负责人不能为空
-
-    def test_tc_st_req_007_001(self, client):
-        """测试项目不存在时的任务统计 [State Transition/Valid]"""
-        response = client.post(
-            "/api/projects/1/stats",
-            data=json.dumps({"project_id": "invalid_project_id"}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 返回错误消息: 项目不存在
-
-    def test_tc_st_req_007_002(self, client):
-        """测试项目存在时的任务统计 [State Transition/Valid]"""
-        response = client.post(
-            "/api/projects/1/stats",
-            data=json.dumps({"project_id": "valid_project_id"}),
-            content_type="application/json"
-        )
-        assert response.status_code in [200, 201, 400, 401, 409, 423], f"Got {response.status_code}"
-        response_json = response.get_json()
-        assert response_json is not None
-        # 预期: 返回任务统计结果，包括任务总数、按状态统计和按优先级统计
+        # 预期: 进入验证用户名状态

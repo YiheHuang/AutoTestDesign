@@ -7,6 +7,8 @@
 | 目录/文件 | 内容 |
 |-----------|------|
 | `docs/` | 三份课程文档：风险分析报告、测试计划、详细测试设计与执行文档 |
+| `docs/english_reports/` | 三份英文 PDF 文档：风险分析报告、测试计划、详细测试设计与执行文档 |
+| `presentation/软测_en.pptx` | 英文答辩 PPT |
 | `tool/` | AutoTestDesign 自动化测试工具源码、提示词、样例需求、单元测试、运行说明 |
 | `target_app/` | 被测应用源码（Task Management Platform）及缺陷记录 |
 | `run_results/` | 任务管理模块 REQ-005、REQ-006、REQ-007 的真实运行结果 |
@@ -23,6 +25,10 @@
 
 3. `docs/03_detailed_test_design.md`  
    以任务管理模块为对象，给出详细测试设计、脚本组织、执行结果与异常现象解释。
+
+对应英文 PDF 版本位于 `docs/english_reports/`。
+
+答辩 PPT 位于 `presentation/软测_en.pptx`。
 
 ## 工具运行方式
 
